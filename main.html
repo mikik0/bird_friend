@@ -1,0 +1,46 @@
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+  <script src="https://unpkg.com/obniz@3.8.0/obniz.js"></script>
+</head>
+<body>
+  <h1>超音波距離センサーと圧電スピーカーをつかったIoT</h1>
+  <div id="dispArea"></div>
+  <script>
+    var obniz = new Obniz("OBNIZ_ID_HERE");
+    obniz.onconnect = async function () {
+      const hcsr04 = obniz.wired("HC-SR04", { gnd: 0, echo: 1, trigger: 2, vcc: 3 });
+      const speaker = obniz.wired("Speaker", { signal: 10, gnd: 11 });
+      while (true) {
+        let avg = 0;
+        let count = 0;
+        var cnt = 0;
+        for (let i = 0; i < 3; i++) {
+          const val = await hcsr04.measureWait();
+          if (val) {
+            count++;
+            avg += val;
+          }
+        }
+        if (count > 1) {
+          avg /= count;
+        }
+        console.log(avg);
+        document.getElementById("dispArea").innerHTML = "<h1>" + avg + " mm</h1>"
+        if (avg < 200) {
+          //ブザーをならす
+          speaker.play(2500); //1000hz
+          cnt++;
+        }
+        else {
+          //ブザーを停める
+          speaker.stop();
+          cnt = 0;
+        }
+        await obniz.wait(100);
+      }
+    }
+  </script>
+</body>
+</html>
